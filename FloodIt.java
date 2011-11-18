@@ -6,7 +6,7 @@ public class FloodIt
 	private static final boolean DEBUG = false;
 
 	private final StringBuilder path = new StringBuilder();
-	private final Set<Node> visited = new HashSet<Node>();
+	private final BitSet visited = new BitSet();
 	private final Map<Character,Integer> remaining = new HashMap<Character,Integer>();
 
 	// The board must be clear within 25 moves, so there's no point
@@ -75,6 +75,12 @@ public class FloodIt
 		}
 	};
 
+	private void toggleVisited(Iterable<Node> nodes)
+	{
+		for(Node n : nodes)
+			visited.flip(n.id);
+	}
+
 	private void search(Map<Character,Move> base, char mergeColor)
 	{
 		path.append(mergeColor);
@@ -104,7 +110,7 @@ public class FloodIt
 					frontier.put(entry.getKey(), new Move(entry.getValue()));
 			for(Node merge : merges)
 				for(Node next : merge)
-					if(!visited.contains(next))
+					if(!visited.get(next.id))
 					{
 						Move nodes = frontier.get(next.color);
 						if(nodes == null)
@@ -115,7 +121,7 @@ public class FloodIt
 						nodes.add(next);
 					}
 
-			visited.addAll(merges);
+			toggleVisited(merges);
 			Character completable = completable(frontier);
 			if(completable != null)
 				search(frontier, completable);
@@ -126,7 +132,7 @@ public class FloodIt
 				for(Move move : moves)
 					search(frontier, move.color);
 			}
-			visited.removeAll(merges);
+			toggleVisited(merges);
 		}
 
 		remaining.put(mergeColor, remaining.get(mergeColor) + merges.getArea());
@@ -135,8 +141,9 @@ public class FloodIt
 
 	private void totalArea(Node root)
 	{
-		if(!visited.add(root))
+		if(visited.get(root.id))
 			return;
+		visited.set(root.id);
 		Integer count = remaining.get(root.color);
 		count = (count == null) ? root.getArea() : count + root.getArea();
 		remaining.put(root.color, count);
