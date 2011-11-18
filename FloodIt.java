@@ -7,6 +7,12 @@ public class FloodIt
 	private final Set<Node> visited = new HashSet<Node>();
 	private final Map<Character,Integer> remaining = new HashMap<Character,Integer>();
 
+	// The board must be clear within 25 moves, so there's no point
+	// searching past that depth. However, this solver counts the
+	// root node as a move, and this bound needs to be set higher
+	// than the highest depth we want to consider; so add 2.
+	private int bestDepth = 25 + 2;
+
 	private FloodIt(Node root)
 	{
 		totalArea(root);
@@ -54,42 +60,50 @@ public class FloodIt
 	{
 		path.append(mergeColor);
 		Move merges = base.get(mergeColor);
+		remaining.put(mergeColor, remaining.get(mergeColor) - merges.getArea());
 
-		Map<Character,Move> frontier = new HashMap<Character,Move>();
-		for(Map.Entry<Character,Move> entry : base.entrySet())
-			if(entry.getKey() != mergeColor)
-				frontier.put(entry.getKey(), new Move(entry.getValue()));
-		for(Node merge : merges)
-			for(Node next : merge)
-				if(!visited.contains(next))
-				{
-					Move nodes = frontier.get(next.color);
-					if(nodes == null)
-					{
-						nodes = new Move();
-						frontier.put(next.color, nodes);
-					}
-					nodes.add(next);
-				}
+		int colors = 0;
+		for(int count : remaining.values())
+			if(count > 0)
+				++colors;
 
-		if(frontier.isEmpty())
+		if(colors == 0)
 		{
 			System.out.println(path);
-			path.setLength(path.length() - 1);
-			return;
+			bestDepth = path.length();
+		}
+		else if(path.length() + colors >= bestDepth)
+			System.out.println(path + "...");
+		else
+		{
+			Map<Character,Move> frontier = new HashMap<Character,Move>();
+			for(Map.Entry<Character,Move> entry : base.entrySet())
+				if(entry.getKey() != mergeColor)
+					frontier.put(entry.getKey(), new Move(entry.getValue()));
+			for(Node merge : merges)
+				for(Node next : merge)
+					if(!visited.contains(next))
+					{
+						Move nodes = frontier.get(next.color);
+						if(nodes == null)
+						{
+							nodes = new Move();
+							frontier.put(next.color, nodes);
+						}
+						nodes.add(next);
+					}
+
+			visited.addAll(merges);
+			Character completable = completable(frontier);
+			if(completable != null)
+				search(frontier, completable);
+			else
+				for(Character color : frontier.keySet())
+					search(frontier, color);
+			visited.removeAll(merges);
 		}
 
-		remaining.put(mergeColor, remaining.get(mergeColor) - merges.getArea());
-		visited.addAll(merges);
-		Character completable = completable(frontier);
-		if(completable != null)
-			search(frontier, completable);
-		else
-			for(Character color : frontier.keySet())
-				search(frontier, color);
-		visited.removeAll(merges);
 		remaining.put(mergeColor, remaining.get(mergeColor) + merges.getArea());
-
 		path.setLength(path.length() - 1);
 	}
 
