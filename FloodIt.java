@@ -9,6 +9,7 @@ public class FloodIt
 		assert TABLE_SIZE == (TABLE_SIZE & -TABLE_SIZE);
 	}
 
+	private final long startTime;
 	private final StringBuilder path = new StringBuilder();
 	private final BitSet visited = new BitSet();
 	private final Map<Character,Integer> remaining = new HashMap<Character,Integer>();
@@ -30,7 +31,15 @@ public class FloodIt
 		visited.clear();
 		Move rootMove = new Move(root.color);
 		rootMove.add(root);
+		startTime = System.currentTimeMillis();
 		search(Collections.singletonMap(root.color, rootMove), root.color);
+		stamp("no more solutions");
+	}
+
+	private void stamp(Object msg)
+	{
+		long now = System.currentTimeMillis();
+		System.out.println((now - startTime) + "\t" + msg);
 	}
 
 	private static class Move extends HashSet<Node>
@@ -114,13 +123,13 @@ public class FloodIt
 
 		if(colors == 0)
 		{
-			System.out.println(path);
+			stamp(path);
 			bestDepth = path.length();
 		}
 		else if(path.length() + heuristic >= bestDepth)
 		{
 			if(DEBUG)
-				System.out.println(path + "...");
+				stamp(path + "...");
 		}
 		else
 		{
