@@ -23,21 +23,25 @@ public class FloodIt
 
 	private static class Move extends HashSet<Node>
 	{
+		public final char color;
 		private int area = 0;
 
-		public Move()
+		public Move(char color)
 		{
+			this.color = color;
 		}
 
 		public Move(Move base)
 		{
-			super(base);
-			area = base.area;
+			color = base.color;
+			addAll(base);
+			assert area == base.area;
 		}
 
 		@Override
 		public boolean add(Node node)
 		{
+			assert node.color == color;
 			boolean ret = super.add(node);
 			if(ret)
 				area += node.getArea();
@@ -48,6 +52,11 @@ public class FloodIt
 		{
 			return area;
 		}
+
+		public String toString()
+		{
+			return color + "(" + area + ")";
+		}
 	}
 
 	private Character completable(Map<Character,Move> frontier)
@@ -57,6 +66,14 @@ public class FloodIt
 				return entry.getKey();
 		return null;
 	}
+
+	/** Sort moves in descending order by area. */
+	private static final Comparator<Move> bestMove = new Comparator<Move>() {
+		public int compare(Move m1, Move m2)
+		{
+			return m2.getArea() - m1.getArea();
+		}
+	};
 
 	private void search(Map<Character,Move> base, char mergeColor)
 	{
@@ -92,7 +109,7 @@ public class FloodIt
 						Move nodes = frontier.get(next.color);
 						if(nodes == null)
 						{
-							nodes = new Move();
+							nodes = new Move(next.color);
 							frontier.put(next.color, nodes);
 						}
 						nodes.add(next);
@@ -103,8 +120,12 @@ public class FloodIt
 			if(completable != null)
 				search(frontier, completable);
 			else
-				for(Character color : frontier.keySet())
-					search(frontier, color);
+			{
+				Move[] moves = frontier.values().toArray(new Move[frontier.size()]);
+				Arrays.sort(moves, bestMove);
+				for(Move move : moves)
+					search(frontier, move.color);
+			}
 			visited.removeAll(merges);
 		}
 
@@ -146,7 +167,7 @@ public class FloodIt
 		if(DEBUG)
 			printGraph(0, root, new HashSet<Node>());
 
-		Move rootMove = new Move();
+		Move rootMove = new Move(root.color);
 		rootMove.add(root);
 		new FloodIt(root).search(Collections.singletonMap(root.color, rootMove), root.color);
 	}
