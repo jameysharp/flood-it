@@ -3,6 +3,8 @@ import java.util.*;
 
 public class FloodIt
 {
+	private static final boolean DEBUG = false;
+
 	private final StringBuilder path = new StringBuilder();
 	private final Set<Node> visited = new HashSet<Node>();
 	private final Map<Character,Integer> remaining = new HashMap<Character,Integer>();
@@ -73,7 +75,10 @@ public class FloodIt
 			bestDepth = path.length();
 		}
 		else if(path.length() + colors >= bestDepth)
-			System.out.println(path + "...");
+		{
+			if(DEBUG)
+				System.out.println(path + "...");
+		}
 		else
 		{
 			Map<Character,Move> frontier = new HashMap<Character,Move>();
@@ -138,7 +143,8 @@ public class FloodIt
 		throws IOException
 	{
 		Node root = Node.readBoard(System.in);
-		printGraph(0, root, new HashSet<Node>());
+		if(DEBUG)
+			printGraph(0, root, new HashSet<Node>());
 
 		Move rootMove = new Move();
 		rootMove.add(root);
