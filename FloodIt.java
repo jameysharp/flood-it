@@ -178,28 +178,12 @@ public class FloodIt
 			totalArea(n);
 	}
 
-	private static void printGraph(int depth, Node root, Set<Node> visited)
-	{
-		if(visited.contains(root))
-			return;
-		visited.add(root);
-		System.out.print(root.id + ":\t");
-		for(int i = 0; i < depth; ++i)
-			System.out.print("  ");
-		System.out.print(root.color + " (" + root.getArea() + ") ->");
-		for(Node n : root)
-			System.out.print(" " + n.id);
-		System.out.println();
-		for(Node n : root)
-			printGraph(depth + 1, n, visited);
-	}
-
 	public static void main(String[] args)
 		throws IOException
 	{
 		Node root = Node.readBoard(System.in);
 		if(DEBUG)
-			printGraph(0, root, new HashSet<Node>());
+			root.printGraph();
 
 		Move rootMove = new Move(root.color);
 		rootMove.add(root);

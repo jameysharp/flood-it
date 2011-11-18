@@ -132,4 +132,24 @@ public class Node implements Iterable<Node>
 		}
 		return rootNode;
 	}
+
+	public void printGraph()
+	{
+		printGraph(0, new HashSet<Node>());
+	}
+
+	private void printGraph(int depth, Set<Node> visited)
+	{
+		if(!visited.add(this))
+			return;
+		System.out.print(id + ":\t");
+		for(int i = 0; i < depth; ++i)
+			System.out.print("  ");
+		System.out.print(color + " (" + getArea() + ") ->");
+		for(Node n : this)
+			System.out.print(" " + n.id);
+		System.out.println();
+		for(Node n : this)
+			n.printGraph(depth + 1, visited);
+	}
 }
