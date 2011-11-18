@@ -3,6 +3,16 @@ import java.util.*;
 
 public class FloodIt
 {
+	private final StringBuilder path = new StringBuilder();
+	private final Set<Node> visited = new HashSet<Node>();
+	private final Map<Character,Integer> remaining = new HashMap<Character,Integer>();
+
+	private FloodIt(Node root)
+	{
+		totalArea(root);
+		visited.clear();
+	}
+
 	private static class Move extends HashSet<Node>
 	{
 		private int area = 0;
@@ -32,7 +42,7 @@ public class FloodIt
 		}
 	}
 
-	private static Character completable(Map<Character,Move> frontier, Map<Character,Integer> remaining)
+	private Character completable(Map<Character,Move> frontier)
 	{
 		for(Map.Entry<Character,Move> entry : frontier.entrySet())
 			if(remaining.get(entry.getKey()).equals(entry.getValue().getArea()))
@@ -40,7 +50,7 @@ public class FloodIt
 		return null;
 	}
 
-	private static void search(StringBuilder path, Map<Character,Move> base, char mergeColor, Map<Character,Integer> remaining, Set<Node> visited)
+	private void search(Map<Character,Move> base, char mergeColor)
 	{
 		path.append(mergeColor);
 		Move merges = base.get(mergeColor);
@@ -71,27 +81,27 @@ public class FloodIt
 
 		remaining.put(mergeColor, remaining.get(mergeColor) - merges.getArea());
 		visited.addAll(merges);
-		Character completable = completable(frontier, remaining);
+		Character completable = completable(frontier);
 		if(completable != null)
-			search(path, frontier, completable, remaining, visited);
+			search(frontier, completable);
 		else
 			for(Character color : frontier.keySet())
-				search(path, frontier, color, remaining, visited);
+				search(frontier, color);
 		visited.removeAll(merges);
 		remaining.put(mergeColor, remaining.get(mergeColor) + merges.getArea());
 
 		path.setLength(path.length() - 1);
 	}
 
-	private static void totalArea(Map<Character,Integer> total, Set<Node> visited, Node root)
+	private void totalArea(Node root)
 	{
 		if(!visited.add(root))
 			return;
-		Integer count = total.get(root.color);
+		Integer count = remaining.get(root.color);
 		count = (count == null) ? root.getArea() : count + root.getArea();
-		total.put(root.color, count);
+		remaining.put(root.color, count);
 		for(Node n : root)
-			totalArea(total, visited, n);
+			totalArea(n);
 	}
 
 	private static void printGraph(int depth, Node root, Set<Node> visited)
@@ -116,11 +126,8 @@ public class FloodIt
 		Node root = Node.readBoard(System.in);
 		printGraph(0, root, new HashSet<Node>());
 
-		Map<Character,Integer> totalArea = new HashMap<Character,Integer>();
-		totalArea(totalArea, new HashSet<Node>(), root);
-
 		Move rootMove = new Move();
 		rootMove.add(root);
-		search(new StringBuilder(), Collections.singletonMap(root.color, rootMove), root.color, totalArea, new HashSet<Node>());
+		new FloodIt(root).search(Collections.singletonMap(root.color, rootMove), root.color);
 	}
 }
