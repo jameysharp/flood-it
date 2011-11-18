@@ -4,10 +4,17 @@ import java.util.*;
 public class FloodIt
 {
 	private static final boolean DEBUG = false;
+	private static final int TABLE_SIZE = 1 << 19;
+	static {
+		assert TABLE_SIZE == (TABLE_SIZE & -TABLE_SIZE);
+	}
 
 	private final StringBuilder path = new StringBuilder();
 	private final BitSet visited = new BitSet();
 	private final Map<Character,Integer> remaining = new HashMap<Character,Integer>();
+
+	private final BitSet[] transposePosition = new BitSet[TABLE_SIZE];
+	private final int[] transposeValue = new int[TABLE_SIZE];
 
 	// The board must be clear within 25 moves, so there's no point
 	// searching past that depth. However, this solver counts the
@@ -81,23 +88,31 @@ public class FloodIt
 			visited.flip(n.id);
 	}
 
-	private void search(Map<Character,Move> base, char mergeColor)
+	private int search(Map<Character,Move> base, char mergeColor)
 	{
 		path.append(mergeColor);
 		Move merges = base.get(mergeColor);
 		remaining.put(mergeColor, remaining.get(mergeColor) - merges.getArea());
+		toggleVisited(merges);
 
 		int colors = 0;
 		for(int count : remaining.values())
 			if(count > 0)
 				++colors;
 
+		int heuristic = colors;
+		int hash = visited.hashCode() & (TABLE_SIZE - 1);
+		if(transposePosition[hash] != null && transposePosition[hash].equals(visited))
+			heuristic = transposeValue[hash];
+
+		int bestSubtree = heuristic;
+
 		if(colors == 0)
 		{
 			System.out.println(path);
 			bestDepth = path.length();
 		}
-		else if(path.length() + colors >= bestDepth)
+		else if(path.length() + heuristic >= bestDepth)
 		{
 			if(DEBUG)
 				System.out.println(path + "...");
@@ -121,22 +136,34 @@ public class FloodIt
 						nodes.add(next);
 					}
 
-			toggleVisited(merges);
 			Character completable = completable(frontier);
 			if(completable != null)
-				search(frontier, completable);
+				bestSubtree = search(frontier, completable) + 1;
 			else
 			{
 				Move[] moves = frontier.values().toArray(new Move[frontier.size()]);
 				Arrays.sort(moves, bestMove);
+				bestSubtree = Integer.MAX_VALUE;
 				for(Move move : moves)
-					search(frontier, move.color);
+				{
+					int subtree = search(frontier, move.color);
+					if(subtree < bestSubtree)
+						bestSubtree = subtree;
+				}
+				++bestSubtree;
+
+				if(transposePosition[hash] == null || transposePosition[hash].size() >= visited.size())
+				{
+					transposePosition[hash] = (BitSet) visited.clone();
+					transposeValue[hash] = bestSubtree;
+				}
 			}
-			toggleVisited(merges);
 		}
 
+		toggleVisited(merges);
 		remaining.put(mergeColor, remaining.get(mergeColor) + merges.getArea());
 		path.setLength(path.length() - 1);
+		return bestSubtree;
 	}
 
 	private void totalArea(Node root)
