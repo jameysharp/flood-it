@@ -22,10 +22,15 @@ public class FloodIt
 	// than the highest depth we want to consider; so add 2.
 	private int bestDepth = 25 + 2;
 
-	private FloodIt(Node root)
+	public FloodIt(Node root)
 	{
+		if(DEBUG)
+			root.printGraph();
 		totalArea(root);
 		visited.clear();
+		Move rootMove = new Move(root.color);
+		rootMove.add(root);
+		search(Collections.singletonMap(root.color, rootMove), root.color);
 	}
 
 	private static class Move extends HashSet<Node>
@@ -181,12 +186,6 @@ public class FloodIt
 	public static void main(String[] args)
 		throws IOException
 	{
-		Node root = Node.readBoard(System.in);
-		if(DEBUG)
-			root.printGraph();
-
-		Move rootMove = new Move(root.color);
-		rootMove.add(root);
-		new FloodIt(root).search(Collections.singletonMap(root.color, rootMove), root.color);
+		new FloodIt(Node.readBoard(System.in));
 	}
 }
