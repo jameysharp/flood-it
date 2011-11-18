@@ -42,10 +42,13 @@ public class FloodIt
 		System.out.println((now - startTime) + "\t" + msg);
 	}
 
-	private static class Move extends HashSet<Node>
+	private class Move extends HashSet<Node>
 	{
 		public final char color;
 		private int area = 0;
+
+		private boolean hasValue = false;
+		private Integer value;
 
 		public Move(char color)
 		{
@@ -62,6 +65,7 @@ public class FloodIt
 		@Override
 		public boolean add(Node node)
 		{
+			assert !hasValue;
 			assert node.color == color;
 			boolean ret = super.add(node);
 			if(ret)
@@ -72,6 +76,20 @@ public class FloodIt
 		public int getArea()
 		{
 			return area;
+		}
+
+		public Integer getValue()
+		{
+			if(!hasValue)
+			{
+				toggleVisited(this);
+				int hash = visited.hashCode() & (TABLE_SIZE - 1);
+				if(transposePosition[hash] != null && transposePosition[hash].equals(visited))
+					value = transposeValue[hash];
+				toggleVisited(this);
+				hasValue = true;
+			}
+			return value;
 		}
 
 		public String toString()
@@ -92,6 +110,14 @@ public class FloodIt
 	private static final Comparator<Move> bestMove = new Comparator<Move>() {
 		public int compare(Move m1, Move m2)
 		{
+			Integer v1 = m1.getValue();
+			Integer v2 = m2.getValue();
+			if(v1 != null && v2 != null)
+				return v1 - v2;
+			if(v1 == null)
+				return 1;
+			if(v2 == null)
+				return -1;
 			return m2.getArea() - m1.getArea();
 		}
 	};
