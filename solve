@@ -1,0 +1,3 @@
+#!/bin/sh
+
+pngtopnm | ./crop | pnmscale -nomix -xysize 14 14 | ./board | java -ea FloodIt
